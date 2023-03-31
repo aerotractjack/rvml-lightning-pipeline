@@ -54,7 +54,7 @@ class RVLightningTraining:
     def __init__(self, tr_uris, val_uris, cc_names, cc_colors):
         self.train_uris = tr_uris
         self.val_uris = val_uris
-        self.cc = ClassConfig(names=cc_names, colors=cc_colors)
+        self.cc = ClassConfig(names=cc_names, colors=cc_colors, null_class="null")
         
     def build_train_ds(self):
         data_augmentation_transform = A.Compose([
@@ -88,10 +88,12 @@ class RVLightningTraining:
     def train(self):
         batch_size = 8
         lr = 1e-4
-        epochs = 2
+        epochs = 3
         output_dir = './semseg-trees-lightning/'
         make_dir(output_dir)
         fast_dev_run = False
+        print(len(self.cc))
+        print(self.cc)
         deeplab = deeplabv3_resnet50(num_classes=len(self.cc) + 1)
         model = SemanticSegmentation(deeplab, lr=lr)
         tb_logger = TensorBoardLogger(save_dir=output_dir + "tensorboard", flush_secs=10)
@@ -131,6 +133,7 @@ class RVLightningTraining:
         ckpt = torch.load(ckpt_path)
         state_dict = ckpt["state_dict"]
         state_dict = fix_keys(state_dict)
+        print(self.cc)
         deeplab = deeplabv3_resnet50(num_classes=len(self.cc) + 1)
         deeplab.load_state_dict(state_dict)
         model = SemanticSegmentation(deeplab)
@@ -147,3 +150,22 @@ class RVLightningTraining:
         scores = pred_labels.get_score_arr(pred_labels.extent)
         return pred_labels, scores
         
+if __name__ == "__main__":
+    train_image_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif"
+    train_label_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson"
+    train_aoi_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson"
+
+    val_image_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif"
+    val_label_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson"
+    val_aoi_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson"
+
+    obj = RVLightningTraining(
+        [train_image_uri, train_label_uri, train_aoi_uri],
+        [val_image_uri, val_label_uri, val_aoi_uri],
+        ["DF", "null"],
+        ["orange", "black"]
+    )
+
+    obj.train()
+
+    labels, scores = obj.predict()
