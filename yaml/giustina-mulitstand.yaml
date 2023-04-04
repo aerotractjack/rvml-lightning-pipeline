@@ -1,0 +1,73 @@
+train_uri: 
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/103_WardsButteSx/Data/ortho/03WardsButteSxGR02122023_Orthomosaic_WedMar08194203915827/03WardsButteSxGR02122023_Orthomosaic_export_WedMar08194203915827.tif",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/104_FinalSalem/Data/ortho/04FinalSalemGR02122023_Orthomosaic_WedMar08195655345878/04FinalSalemGR02122023_Orthomosaic_export_WedMar08195655345878.tif",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/105_WinStormGTF/Data/ortho/05WinstormGR02122023_Orthomosaic_WedMar08201410773708/05WinstormGR02122023_Orthomosaic_export_WedMar08201410773708.tif",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/108_Moffit/Data/ortho/08MoffitGR02122023_Orthomosaic_export_FriMar10183649417525.tif"
+  ]
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/103_WardsButteSx/Training/WardsButte_trees_poly.geojson",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/104_FinalSalem/Training/FinalSalem_tree_polys.geojson",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/105_WinStormGTF/Training/Tree_poly.geojson",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/108_Moffit/Training/Trees.geojson"
+  ]
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/103_WardsButteSx/Training/WardsButte_sample_boundary.geojson",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/104_FinalSalem/Training/finalSalem_sample_Boundary.geojson",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/105_WinStormGTF/Training/Sample_Boundary.geojson",
+    "/home/aerotract/NAS/Clients/Giustina/Winter2023/108_Moffit/Training/Boundary.geojson"
+  ]
+
+val_uri: 
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif"
+  ]
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson"
+  ]
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson"
+  ]
+
+pred_uri: 
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/Tiled/230OG_Orthomosaic"
+  ]
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson"
+  ]
+
+output:
+  uri: "/home/aerotract/NAS/main/JackSandbox/giustina-multi-stand"
+
+class_config:
+  names: ["DF", "null"]
+  colors: ["orange", "black"]
+
+train_ds_kw:
+  size_lims: [300,500]
+  out_size: 325
+  max_windows: 100
+
+val_ds_kw:
+  size: 325
+  stride: 325
+
+pred_ds_kw:
+  size: 325
+  stride: 325
+  num_images: 3
+
+train_kw:
+  batch_size: 8
+  lr: 1e-4
+  epochs: 50
+
+predict_kw: 
+  num_preds: 3
+  polygon_output: True
+  # denoise: 5
+  polygon_classes: [0]

@@ -2,7 +2,7 @@ import albumentations as A
 from rastervision.pytorch_learner import (
     SemanticSegmentationRandomWindowGeoDataset,
     SemanticSegmentationSlidingWindowGeoDataset,
-    SemanticSegmentationVisualizer)
+)
 from rastervision.core.data import ClassConfig
 from tqdm.autonotebook import tqdm
 import torch
