@@ -22,23 +22,6 @@ from smart_open import open as smart_open
 import io
 import boto3
 
-def tif2json(tif, json):
-    data = rasterio.open(tif).meta
-    c = str(data['crs'])
-    crs = "epsg:"+c.split(":")[1]
-    mask = None
-    geoms = []
-    with rasterio.open(tif) as src:
-        image = src.read(1)
-        for i, (s,v) in enumerate(shapes(image, mask=mask, transform=data["transform"])):
-            res = {"properties": {"NDVI": v}, "geometry": s}
-            geoms.append(res)
-    df = geopandas.GeoDataFrame.from_features(geoms, crs=c)
-    df = df[df["NDVI"]>0]
-    df["geometry"] = df["geometry"].to_crs({"init": crs})
-    df.to_file(json)
-    return df
-
 class SemanticSegmentation(pl.LightningModule):
     
     def __init__(self, deeplab, lr=1e-4):
@@ -76,15 +59,20 @@ class SemanticSegmentation(pl.LightningModule):
     
 class RVLightning:
     
-    def __init__(self, tr_uris, val_uris, pred_uris, cc_names, cc_colors, output_uri, bucket):
+    def __init__(self, tr_uris, val_uris, pred_uris, output, class_config, kw=None):
         self.train_uris = tr_uris
         self.val_uris = val_uris
         self.pred_uris = pred_uris
-        self.cc = ClassConfig(names=cc_names, colors=cc_colors, null_class="null")
-        self.output_uri = output_uri
-        self.bucket = bucket
+        self.cc = ClassConfig(
+            names=class_config["names"], 
+            colors=class_config["colors"],
+            null_class="null")
+        self.output_uri = output.get("uri")
+        self.bucket = output.get("bucket")
+        self.kw = kw
         
     def build_train_ds(self):
+        kw = self.kw.get("train_ds_kw", {})
         data_augmentation_transform = A.Compose([
             A.Flip(),
             A.ShiftScaleRotate(),
@@ -96,24 +84,26 @@ class RVLightning:
             aoi_uri=self.train_uris[2],
             label_vector_uri=self.train_uris[1],
             label_vector_default_class_id=self.cc.get_class_id('DF'),
-            size_lims=(300, 350),
-            out_size=325,
-            max_windows=10,
+            size_lims=kw.get("size_lims", [300,350]),
+            out_size=kw.get("out_size", 325),
+            max_windows=kw.get("max_windows", 10),
             transform=data_augmentation_transform)
         return train_ds
     
     def build_val_ds(self):
+        kw = self.kw.get("val_ds_kw", {})
         val_ds = SemanticSegmentationSlidingWindowGeoDataset.from_uris(
             class_config=self.cc,
             image_uri=self.val_uris[0],
             aoi_uri=self.val_uris[2],
             label_vector_uri=self.val_uris[1],
             label_vector_default_class_id=self.cc.get_class_id('DF'),
-            size=325,
-            stride=325)
+            size=kw.get("size", 325),
+            stride=kw.get("stride", 325))
         return val_ds
     
     def build_pred_ds(self):
+        kw = self.kw.get("pred_ds_kw", {})
         def get_tiles_from_dir(d):
             v = [x.as_posix() for x in pathlib.Path(d).glob("*.tif")]
             return v
@@ -130,19 +120,21 @@ class RVLightning:
             img_uri = get_tiles_from_s3(pref)
         else:
             img_uri = get_tiles_from_dir(self.pred_uris[0])
+        if kw.get("num_images", None) is not None:
+            img_uri = img_uri[:kw.get("num_images")]
         pred_ds = SemanticSegmentationSlidingWindowGeoDataset.from_uris(
             class_config=self.cc,
-            #image_uri=self.pred_uris[0],
-            image_uri=img_uri[:5],
+            image_uri=img_uri,
             aoi_uri=self.pred_uris[1],
-            size=325,
-            stride=325)
+            size=kw.get("size", 325),
+            stride=kw.get("stride", 325))
         return pred_ds
     
     def train(self):
-        batch_size = 8
-        lr = 1e-4
-        epochs = 1
+        kw = self.kw.get("train_kw", {})
+        batch_size = kw.get("batch_size", 8)
+        lr = float(kw.get("lr", 1e-4))
+        epochs = kw.get("epochs", 1)
         output_dir = self.output_uri
         make_dir(output_dir)
         fast_dev_run = False
@@ -174,7 +166,8 @@ class RVLightning:
             for out in out_batch:
                 yield out.numpy()
         
-    def predict(self, n=20):
+    def predict(self):
+        kw = self.kw.get("predict_kw", {})
         def fix_keys(data):
             for _ in range(len(data)):
                 k, v = data.popitem(False)
@@ -190,10 +183,9 @@ class RVLightning:
         deeplab = deeplabv3_resnet50(num_classes=len(self.cc) + 1)
         deeplab.load_state_dict(state_dict)
         model = SemanticSegmentation(deeplab)
-        print("built model")
         pds = self.build_pred_ds()
         pred_dl = DataLoader(pds, batch_size=8, num_workers=4)
-        predictions = self.prediction_iterator(pred_dl, model, n)
+        predictions = self.prediction_iterator(pred_dl, model, kw.get("num_preds"))
         pred_labels = SemanticSegmentationLabels.from_predictions(
             pds.windows,
             predictions,
@@ -201,62 +193,45 @@ class RVLightning:
             extent=pds.scene.extent,
             num_classes=len(self.cc)+1
         )
-        voutputs = [
-                PolygonVectorOutputConfig(class_id=i, 
-                    uri=f"{self.output_uri}/pred-labels-scores-vectors/{i}.geojson") for i in range(len(self.cc))
+        if kw.get("polygon_output", True):
+            voutputs = [
+                PolygonVectorOutputConfig(
+                    class_id=0,
+                    uri=f"{self.output_uri}/pred-labels-vectors/{0}.geojson",
+                    denoise=kw.get("denoise", 10),
+                ) 
             ]
-        print("saving preds")
+        else:
+            voutputs = []
         pred_labels.save(
             uri=f"{self.output_uri}/pred-labels-scores-vectors",
             crs_transformer=pds.scene.raster_source.crs_transformer,
             class_config=self.cc,
-            discrete_output=True,
+            discrete_output=False,
             smooth_output=False,
             smooth_as_uint8=False,
             vector_outputs=voutputs,
         )
         return pred_labels
     
-def test():
-    train_image_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif"
-    train_label_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson"
-    train_aoi_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson"
-    
-    # train_image_uri = "s3://rvlightning-experiments/giustina-test/train/image.tif"
-    # train_label_uri = "s3://rvlightning-experiments/giustina-test/train/label.json"
-    # train_aoi_uri = "s3://rvlightning-experiments/giustina-test/train/aoi.json"
+def run(config_path):
+    from configreader import yaml2dict
 
-    val_image_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif"
-    val_label_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson"
-    val_aoi_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson"
-    
-    # val_image_uri = "s3://rvlightning-experiments/giustina-test/val/image.tif"
-    # val_label_uri = "s3://rvlightning-experiments/giustina-test/val/label.json"
-    # val_aoi_uri = "s3://rvlightning-experiments/giustina-test/val/aoi.json"
-
-    pred_image_dir = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/Tiled/230OG_Orthomosaic"
-    pred_aoi_uri = "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson"
-    
-    # pred_image_dir = "s3://rvlightning-experiments/giustina-test/pred/tiled"
-    # pred_aoi_uri = "s3://rvlightning-experiments/giustina-test/pred/aoi.json"
-    
-    # output_uri = "s3://rvlightning-experiments/giustina-test/longer-train-output"
-    output_uri = "./test-output"
-    bucket = "rvlightning-experiments"
+    conf = yaml2dict(config_path)
 
     obj = RVLightning(
-        [train_image_uri, train_label_uri, train_aoi_uri],
-        [val_image_uri, val_label_uri, val_aoi_uri],
-        [pred_image_dir, pred_aoi_uri],
-        ["DF", "null"],
-        ["orange", "black"],
-        output_uri,
-        bucket,
+        conf["train_uri"],
+        conf["val_uri"],
+        conf["pred_uri"],
+        conf["output"],
+        conf["class_config"],
+        conf
     )
 
-    obj.train()
+    # obj.train()
 
     return obj.predict()
 
 if __name__ == "__main__":
-    test()
+    import sys
+    run(sys.argv[1])

@@ -1,0 +1,45 @@
+train_uri: 
+  - "s3://rvlightning-experiments/giustina-test/train/image.tif"
+  - "s3://rvlightning-experiments/giustina-test/val/label.json"
+  - "s3://rvlightning-experiments/giustina-test/val/aoi.json"
+
+val_uri: 
+  - "s3://rvlightning-experiments/giustina-test/train/image.tif"
+  - "s3://rvlightning-experiments/giustina-test/val/label.json"
+  - "s3://rvlightning-experiments/giustina-test/val/aoi.json"
+
+pred_uri: 
+  - "s3://rvlightning-experiments/giustina-test/pred/tiled"
+  - "s3://rvlightning-experiments/giustina-test/pred/aoi.json"
+
+output:
+  uri: "s3://rvlightning-experiments/giustina-test/longer-train-output"
+  bucket: "rvlightning-experiments"
+
+class_config:
+  names: ["DF", "null"]
+  colors: ["orange", "black"]
+
+train_ds_kw:
+  size_lims: [300,500]
+  out_size: 325
+  max_windows: 10
+
+val_ds_kw:
+  size: 325
+  stride: 325
+
+pred_ds_kw:
+  size: 325
+  stride: 325
+  num_images: 5
+
+train_kw:
+  batch_size: 8
+  lr: 1e-4
+  epochs: 1
+
+predict_kw: 
+  num_preds: 20
+  polygon_output: True
+  denoise: 10
