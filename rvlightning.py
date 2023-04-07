@@ -74,7 +74,8 @@ class ObjectDetection(pl.LightningModule):
         ys = self.output_to_numpy(out["ys"])
         map_metric = MeanAveragePrecision(box_format="xyxy", iou_thresholds=[0.5])
         map_metric.update(outs, ys)
-        print(map_metric.compute())
+        self.log("val_mAP", map_metric["map"])
+        self.log("val_mAP50", map_metric["map_50"])
     
     def predict(self, x, raw_out=False, out_shape=None):
         self.backbone.eval()
