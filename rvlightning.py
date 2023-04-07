@@ -72,7 +72,6 @@ class ObjectDetection(pl.LightningModule):
     def on_validation_batch_end(self, out, batch, batch_idx):
         outs = self.output_to_numpy(out["outs"])
         ys = self.output_to_numpy(out["ys"])
-        metr = self.val_map_metric(outs, ys).compute()
         map_metric = MeanAveragePrecision(box_format="xyxy", iou_thresholds=[0.5])
         map_metric.update(outs, ys)
         print(map_metric.compute())
