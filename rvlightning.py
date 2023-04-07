@@ -73,7 +73,8 @@ class ObjectDetection(pl.LightningModule):
     def on_validation_batch_end(self, out, batch, batch_idx):
         outs = self.output_to_numpy(out["outs"])
         ys = self.output_to_numpy(out["ys"])
-        self.val_map_metric(outs, ys)
+        metr = self.val_map_metric(outs, ys).compute()
+        print(metr)
         self.log_dict(self.val_map_metric)
     
     def predict(self, x, raw_out=False, out_shape=None):
