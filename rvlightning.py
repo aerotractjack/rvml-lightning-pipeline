@@ -1,7 +1,6 @@
 import albumentations as A
 from rastervision.core.data import ClassConfig
 from rastervision.pytorch_learner import (
-    ObjectDetectionRandomWindowGeoDataset,
     ObjectDetectionSlidingWindowGeoDataset,
 )
 from rastervision.pytorch_learner.object_detection_utils import (
@@ -29,7 +28,7 @@ class ObjectDetection(pl.LightningModule):
 
     def __init__(self, backbone, lr=1e-4):
         super().__init__()
-        self.backbone = backbone # TorchVisionODAdapter(backbone)
+        self.backbone = TorchVisionODAdapter(backbone)
         self.lr = lr
         self.val_map_metric = MeanAveragePrecision(box_format="xyxy", iou_thresholds=[0.5])
 
@@ -44,11 +43,11 @@ class ObjectDetection(pl.LightningModule):
     
     def boxlist_to_tensor(self, boxlist, class_id_key):
         tns = {}
-        tns["boxes"] = boxlist.convert_boxes('xyxy').cpu().float()
-        tns[class_id_key] = boxlist.get_field('class_ids').cpu().int()
+        tns["boxes"] = boxlist.convert_boxes('xyxy').type(torch.float)
+        tns[class_id_key] = boxlist.get_field('class_ids').type(torch.int64)
         scores = boxlist.get_field('scores')
         if scores is not None:
-            tns["scores"] = scores.float()
+            tns["scores"] = scores.type(torch.float)
         return tns
     
     def boxlist_to_numpy(self, boxlist, class_id_key):

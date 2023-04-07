@@ -47,7 +47,7 @@ model_kw:
   
 train_kw:
   run_training: True
-  epochs: 2
+  epochs: 5
 
 predict_kw: 
   max_batches: 5000
