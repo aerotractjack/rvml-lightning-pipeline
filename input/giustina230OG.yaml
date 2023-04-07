@@ -21,33 +21,33 @@ pred_uri:
 
 
 output:
-  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/sliding-training-230OG"
+  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/230OG-tests"
 
 class_config:
   names: ["DF"]
   colors: ["orange"]
 
 train_data_kw:
-  size: 325
-  stride: 325
+  size: 450
+  stride: 450
   batch_size: 2
 
 val_data_kw:
-  size: 350
-  stride: 350
+  size: 450
+  stride: 450
 
 pred_data_kw:
-  size: 350
-  stride: 350
+  size: 450
+  stride: 450
   batch_size: 2
 
 model_kw:
   name: fasterrcnn_resnet50_fpn_v2
-  lr: 1e-5
+  lr: 1e-3
   
 train_kw:
   run_training: True
-  epochs: 5
+  epochs: 15
 
 predict_kw: 
   max_batches: 5000

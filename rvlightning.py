@@ -42,12 +42,12 @@ class ObjectDetection(pl.LightningModule):
     def forward(self, img):
         return self.backbone(img)
     
-    def output_to_numpy(self, out):
+    def output_to_numpy(self, out, class_id_key="class_ids"):
         def boxlist_to_numpy(boxlist):
             npy = {}
             npy["boxes"] = boxlist.convert_boxes('xyxy').cpu().float()
             # npy["class_ids"] = boxlist.get_field('class_ids').cpu()
-            npy["labels"] = boxlist.get_field('class_ids').cpu().int()
+            npy[class_id_key] = boxlist.get_field('class_ids').cpu().int()
             scores = boxlist.get_field('scores')
             if scores is not None:
                 npy["scores"] = scores.float()
@@ -71,7 +71,7 @@ class ObjectDetection(pl.LightningModule):
 
     def on_validation_batch_end(self, out, batch, batch_idx):
         outs = self.output_to_numpy(out["outs"])
-        ys = self.output_to_numpy(out["ys"])
+        ys = self.output_to_numpy(out["ys"], "labels")
         map_metric = MeanAveragePrecision(box_format="xyxy", iou_thresholds=[0.5])
         map_metric.update(outs, ys)
         self.log("val_mAP", map_metric["map"])
@@ -222,7 +222,7 @@ class RVLightning:
                 break
             with torch.inference_mode():
                 out_batch = model.predict(x)
-                out_batch = model.output_to_numpy(out_batch)
+                out_batch = model.output_to_numpy(out_batch, class_id_key="class_ids")
             for out in out_batch:
                 yield out
                 
