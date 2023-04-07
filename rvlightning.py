@@ -32,7 +32,7 @@ class ObjectDetection(pl.LightningModule):
         super().__init__()
         self.backbone = TorchVisionODAdapter(backbone)
         self.lr = lr
-        self.val_map_metric = MeanAveragePrecision(box_format="yxyx", iou_thresholds=[0.5])
+        self.val_map_metric = MeanAveragePrecision(box_format="xyxy", iou_thresholds=[0.5])
 
     def to_device(self, x, device):
         if isinstance(x, list):
@@ -46,7 +46,7 @@ class ObjectDetection(pl.LightningModule):
     def output_to_numpy(self, out):
         def boxlist_to_numpy(boxlist):
             npy = {}
-            npy["boxes"] = boxlist.convert_boxes('yxyx').cpu().numpy() 
+            npy["boxes"] = boxlist.convert_boxes('xyxy').cpu().numpy() 
             # npy["class_ids"] = boxlist.get_field('class_ids').cpu().numpy()
             npy["labels"] = boxlist.get_field('class_ids').cpu().numpy()
             scores = boxlist.get_field('scores')
