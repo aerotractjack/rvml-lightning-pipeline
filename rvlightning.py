@@ -71,11 +71,11 @@ class ObjectDetection(pl.LightningModule):
         ys = self.output_to_numpy(ys, class_id_key="labels")
         outs = self.output_to_numpy(outs, class_id_key="labels")
         self.val_map_metric(outs, ys)
-        self.log_dict(self.val_map_metric)
+        self.log_dict(self.val_map_metric.compute())
         return {'ys': ys, 'outs': outs}
 
     def on_validation_batch_end(self, out, batch, batch_idx):
-        self.log_dict(self.val_map_metric)
+        self.log_dict(self.val_map_metric.compute())
     
     def predict(self, x, raw_out=False, out_shape=None):
         self.backbone.eval()
