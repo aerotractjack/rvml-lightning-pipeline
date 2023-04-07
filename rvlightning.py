@@ -32,6 +32,12 @@ class ObjectDetection(pl.LightningModule):
         self.backbone = TorchVisionODAdapter(backbone)
         self.lr = lr
 
+    def to_device(self, x, device):
+        if isinstance(x, list):
+            return [_x.to(device) if _x is not None else _x for _x in x]
+        else:
+            return x.to(device)
+
     def forward(self, img):
         return self.backbone(img)
     
