@@ -63,11 +63,18 @@ class ObjectDetection(pl.LightningModule):
         return loss_dict
 
     def validation_step(self, batch, batch_ind):
-        x, y = batch
-        loss_dict = self.backbone(x, y)
-        loss_dict['loss'] = sum(loss_dict.values())
-        self.log("val_loss", loss_dict["loss"])
-        return loss_dict
+        x, ys = batch
+        outs = self.backbone(x)
+        print(outs)
+        print(ys)
+        return {'ys': ys, 'outs': outs}
+
+    def on_validation_batch_end(self, out, batch, batch_idx):
+        outs = self.output_to_numpy(out["outs"])
+        ys = self.output_to_numpy(out["ys"])
+        num_class_ids = 2
+        metrics = {"val_loss": 1}
+        return metrics
     
     def predict(self, x, raw_out=False, out_shape=None):
         self.backbone.eval()
