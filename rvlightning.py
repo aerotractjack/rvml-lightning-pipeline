@@ -32,6 +32,7 @@ class ObjectDetection(pl.LightningModule):
         super().__init__()
         self.backbone = TorchVisionODAdapter(backbone)
         self.lr = lr
+        self.val_map_metric = MeanAveragePrecision(box_format="xyxy", iou_thresholds=[0.5])
 
     def to_device(self, x, device):
         if isinstance(x, list):
@@ -67,15 +68,14 @@ class ObjectDetection(pl.LightningModule):
     def validation_step(self, batch, batch_ind):
         x, ys = batch
         outs = self.backbone(x)
+        ys = self.output_to_numpy(ys, class_id_key="labels")
+        outs = self.output_to_numpy(outs, class_id_key="labels")
+        self.val_map_metric(outs, ys)
+        self.log_dict(self.val_map_metric)
         return {'ys': ys, 'outs': outs}
 
     def on_validation_batch_end(self, out, batch, batch_idx):
-        outs = self.output_to_numpy(out["outs"], class_id_key="labels")
-        ys = self.output_to_numpy(out["ys"], class_id_key="labels")
-        map_metric = MeanAveragePrecision(box_format="xyxy", iou_thresholds=[0.5])
-        map_metric.update(outs, ys)
-        self.log("val_mAP", map_metric["map"])
-        self.log("val_mAP50", map_metric["map_50"])
+        self.log_dict(self.val_map_metric)
     
     def predict(self, x, raw_out=False, out_shape=None):
         self.backbone.eval()
