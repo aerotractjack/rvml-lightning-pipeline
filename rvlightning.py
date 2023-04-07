@@ -69,6 +69,7 @@ class ObjectDetection(pl.LightningModule):
         return {'ys': ys, 'outs': outs}
 
     def on_validation_batch_end(self, out, batch, batch_idx):
+        print(out)
         outs = []
         ys = []
         for o in out:
