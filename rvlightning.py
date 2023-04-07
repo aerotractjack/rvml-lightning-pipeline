@@ -52,7 +52,7 @@ class ObjectDetection(pl.LightningModule):
             tns["scores"] = scores.float()
         return tns
     
-    def boxlist_to_numpy(boxlist, class_id_key):
+    def boxlist_to_numpy(self, boxlist, class_id_key):
         npy = {}
         npy["boxes"] = boxlist.convert_boxes('xyxy').cpu().numpy()
         npy[class_id_key] = boxlist.get_field('class_ids').cpu().numpy()
