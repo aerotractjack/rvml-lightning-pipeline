@@ -47,7 +47,6 @@ class ObjectDetection(pl.LightningModule):
         outs = self.backbone(x)
         ys = self.to_device(y, 'cpu')
         outs = self.to_device(outs, 'cpu')
-        print(outs)
         return {'ys': ys, 'outs': outs}
 
     def validate_end(self, outputs):
@@ -68,7 +67,8 @@ class ObjectDetection(pl.LightningModule):
     def predict(self, x, raw_out=False, out_shape=None):
         self.backbone.eval()
         with torch.no_grad():
-            out_batch = self.backbone(x)
+            device = torch.device('cuda')
+            out_batch = self.backbone.to(device)(x.to(device))
         if out_shape is None:
             return out_batch
         h_in, w_in = x.shape[-2:]
@@ -208,9 +208,9 @@ class RVLightning:
     def output_to_numpy(self, out):
         def boxlist_to_numpy(boxlist):
             return {
-                'boxes': boxlist.convert_boxes('yxyx').numpy(),
-                'class_ids': boxlist.get_field('class_ids').numpy(),
-                'scores': boxlist.get_field('scores').numpy()
+                'boxes': boxlist.convert_boxes('yxyx').cpu().numpy(),
+                'class_ids': boxlist.get_field('class_ids').cpu().numpy(),
+                'scores': boxlist.get_field('scores').cpu().numpy()
             }
 
         if isinstance(out, BoxList):
@@ -257,7 +257,7 @@ class RVLightning:
             predictions,
         )
         pred_labels.save(
-            uri=f"{self.output_uri}/pred-labels.geojson",
+            uri=f"{self.output_uri}/pred-labels2.geojson",
             crs_transformer=pred_dl.dataset.scene.raster_source.crs_transformer,
             class_config=self.cc,
         )
