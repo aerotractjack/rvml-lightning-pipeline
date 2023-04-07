@@ -50,4 +50,4 @@ train_kw:
   epochs: 5
 
 predict_kw: 
-  max_batches: 5000
+  max_batches: None
