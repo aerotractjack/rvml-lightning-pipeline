@@ -21,7 +21,7 @@ pred_uri:
 
 
 output:
-  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/230OG-tests"
+  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/230OG-tests-friday"
 
 class_config:
   names: ["DF"]

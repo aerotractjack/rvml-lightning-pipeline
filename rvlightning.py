@@ -265,6 +265,9 @@ class RVLightning:
         pred_labels = ObjectDetectionLabels.from_predictions(
             pred_dl.dataset.windows,
             predictions,
+        ).prune_duplicates(
+            score_thresh=0.75,
+            merge_thresh=0.1
         )
         pred_labels.save(
             uri=f"{self.output_uri}/pred-labels.geojson",
