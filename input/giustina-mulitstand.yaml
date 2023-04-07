@@ -56,13 +56,15 @@ val_data_kw:
 pred_data_kw:
   size: 325
   stride: 325
+  batch_size: 4
 
 model_kw:
   name: fasterrcnn_resnet50_fpn_v2
   lr: 1e-4
   
 train_kw:
-    epochs: 50
+  run_training: False
+  epochs: 50
 
 predict_kw: 
-  max_images: -1
+  max_images: 1000

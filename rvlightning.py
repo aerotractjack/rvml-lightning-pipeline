@@ -18,7 +18,8 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from tqdm import tqdm
 from smart_open import smart_open
 import io
-import pathlib 
+import pathlib
+import boto3
 
 def exit():
     import sys
@@ -184,6 +185,8 @@ class RVLightning:
     
     def train(self):
         kw = self.kw.get("train_kw", {})
+        if not kw.get("run_training", True):
+            return
         epochs = kw.get("epochs", 1)
         model = self.build_model()
         output_dir = self.output_uri
@@ -254,7 +257,7 @@ class RVLightning:
             predictions,
         )
         pred_labels.save(
-            uri=f"{self.output_uri}/pred-labels",
+            uri=f"{self.output_uri}/pred-labels.geojson",
             crs_transformer=pred_dl.dataset.scene.raster_source.crs_transformer,
             class_config=self.cc,
         )
