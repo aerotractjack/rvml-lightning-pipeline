@@ -280,4 +280,7 @@ def run(config_path):
 
 if __name__ == "__main__":
     import sys
-    run(sys.argv[1])
+    file = "input/giustina230OG.yaml"
+    if len(sys.argv) > 1:
+        file = sys.argv[1]
+    run(file)
