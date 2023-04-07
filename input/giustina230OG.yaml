@@ -1,0 +1,56 @@
+train_uri: 
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif",
+  ]
+  - "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson"
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson",
+  ]
+
+val_uri: 
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif"
+  ]
+  - "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson"
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson"
+  ]
+
+pred_uri: 
+  - "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/Tiled/230OG_Orthomosaic"
+
+
+output:
+  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/sliding-training-230OG"
+
+class_config:
+  names: ["null", "DF"]
+  colors: ["black", "orange"]
+
+train_data_kw:
+  # size_lims: [300,500]
+  # out_size: 325
+  # max_windows: 500
+  size: 325
+  stride: 325
+  batch_size: 2
+
+val_data_kw:
+  size: 350
+  stride: 350
+
+pred_data_kw:
+  size: 350
+  stride: 350
+  batch_size: 2
+
+model_kw:
+  name: fasterrcnn_resnet50_fpn_v2
+  lr: 1e-5
+  
+train_kw:
+  run_training: True
+  epochs: 5
+
+predict_kw: 
+  max_batches: 5000
