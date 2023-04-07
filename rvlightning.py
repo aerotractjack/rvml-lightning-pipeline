@@ -49,9 +49,9 @@ class ObjectDetection(pl.LightningModule):
             npy["boxes"] = boxlist.convert_boxes('xyxy').cpu().float()
             # npy["class_ids"] = boxlist.get_field('class_ids').cpu()
             npy["labels"] = boxlist.get_field('class_ids').cpu().int()
-            scores = boxlist.get_field('scores').float()
+            scores = boxlist.get_field('scores')
             if scores is not None:
-                npy["scores"] = scores
+                npy["scores"] = scores.float()
             return npy
         if isinstance(out, BoxList):
             return boxlist_to_numpy(out)
