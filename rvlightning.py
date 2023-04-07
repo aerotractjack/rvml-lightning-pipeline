@@ -72,7 +72,7 @@ class ObjectDetection(pl.LightningModule):
     def on_validation_batch_end(self, out, batch, batch_idx):
         outs = self.output_to_numpy(out["outs"])
         ys = self.output_to_numpy(out["ys"])
-        num_class_ids = len(self.cfg.data.class_names)
+        num_class_ids = 2
         coco_eval = compute_coco_eval(outs, ys, num_class_ids)
         metrics = {'mAP': 0.0, 'mAP50': 0.0}
         if coco_eval is not None:
