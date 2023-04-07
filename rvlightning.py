@@ -31,7 +31,6 @@ class ObjectDetection(pl.LightningModule):
     def __init__(self, backbone, cc, lr=1e-4):
         super().__init__()
         self.backbone = TorchVisionODAdapter(backbone)
-        self.cc = cc
         self.lr = lr
         self.val_map_metric = MeanAveragePrecision(box_format="yxyx", iou_thresholds=[0.5])
 
