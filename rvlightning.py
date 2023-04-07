@@ -45,6 +45,7 @@ class ObjectDetection(pl.LightningModule):
     def validation_step(self, batch, batch_ind):
         x, y = batch
         outs = self.backbone(x)
+        print(y)
         ys = self.to_device(y, 'cpu')
         outs = self.to_device(outs, 'cpu')
         metrics = self.validate_end(outs)
