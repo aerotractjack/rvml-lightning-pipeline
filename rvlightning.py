@@ -42,7 +42,7 @@ class ObjectDetection(pl.LightningModule):
         self.log("train_loss", loss_dict["loss"])
         return loss_dict
 
-    def validate_step(self, batch, batch_ind):
+    def validation_step(self, batch, batch_ind):
         x, y = batch
         outs = self.backbone(x)
         ys = self.to_device(y, 'cpu')
@@ -51,10 +51,10 @@ class ObjectDetection(pl.LightningModule):
         self.log_dict(metrics)
         return {'ys': ys, 'outs': outs}
 
-    def validate_end(self, outputs):
+    def on_validation_batch_end(self, out, batch, batch_idx):
         outs = []
         ys = []
-        for o in outputs:
+        for o in out:
             outs.extend(o['outs'])
             ys.extend(o['ys'])
         num_class_ids = len(self.cfg.data.class_names)
