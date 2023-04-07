@@ -47,6 +47,8 @@ class ObjectDetection(pl.LightningModule):
         outs = self.backbone(x)
         ys = self.to_device(y, 'cpu')
         outs = self.to_device(outs, 'cpu')
+        metrics = self.validate_end(outs)
+        self.log_dict(metrics)
         return {'ys': ys, 'outs': outs}
 
     def validate_end(self, outputs):
@@ -100,16 +102,24 @@ class RVLightning:
         
     def build_train_ds(self):
         kw = self.kw.get("train_data_kw", {})
-        train_ds = ObjectDetectionRandomWindowGeoDataset.from_uris(
+        # train_ds = ObjectDetectionRandomWindowGeoDataset.from_uris(
+        #     class_config=self.cc,
+        #     image_uri=self.train_uris[0],
+        #     aoi_uri=self.train_uris[2],
+        #     label_vector_uri=self.train_uris[1],
+        #     label_vector_default_class_id=self.cc.get_class_id('DF'),
+        #     size_lims=kw.get("size_lims", [300,350]),
+        #     out_size=kw.get("out_size", 325),
+        #     max_windows=kw.get("max_windows", None),
+        # )
+        train_ds = ObjectDetectionSlidingWindowGeoDataset.from_uris(
             class_config=self.cc,
             image_uri=self.train_uris[0],
             aoi_uri=self.train_uris[2],
             label_vector_uri=self.train_uris[1],
             label_vector_default_class_id=self.cc.get_class_id('DF'),
-            size_lims=kw.get("size_lims", [300,350]),
-            out_size=kw.get("out_size", 325),
-            max_windows=kw.get("max_windows", None),
-        )
+            size=kw.get("size", 325),
+            stride=kw.get("stride", 325))
         return train_ds
     
     def build_val_ds(self):
@@ -257,7 +267,7 @@ class RVLightning:
             predictions,
         )
         pred_labels.save(
-            uri=f"{self.output_uri}/pred-labels2.geojson",
+            uri=f"{self.output_uri}/pred-labels.geojson",
             crs_transformer=pred_dl.dataset.scene.raster_source.crs_transformer,
             class_config=self.cc,
         )

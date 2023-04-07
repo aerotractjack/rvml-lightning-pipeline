@@ -37,21 +37,24 @@ pred_uri:
 
 
 output:
-  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/finally-working"
+  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/sliding-training-230OG"
 
 class_config:
   names: ["null", "DF"]
   colors: ["black", "orange"]
 
 train_data_kw:
-  size_lims: [300,500]
-  out_size: 325
-  max_windows: 5000
+  # size_lims: [300,500]
+  # out_size: 325
+  # max_windows: 500
+  size: 325
+  stride: 325
   batch_size: 2
 
 val_data_kw:
   size: 325
   stride: 325
+  batch_size: 2
 
 pred_data_kw:
   size: 325
@@ -67,4 +70,4 @@ train_kw:
   epochs: 50
 
 predict_kw: 
-  max_images: 1000
+  max_images: 3000
