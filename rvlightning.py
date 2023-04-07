@@ -28,7 +28,7 @@ def exit():
 
 class ObjectDetection(pl.LightningModule):
 
-    def __init__(self, backbone, cc, lr=1e-4):
+    def __init__(self, backbone, lr=1e-4):
         super().__init__()
         self.backbone = TorchVisionODAdapter(backbone)
         self.lr = lr
