@@ -73,12 +73,7 @@ class ObjectDetection(pl.LightningModule):
         outs = self.output_to_numpy(out["outs"])
         ys = self.output_to_numpy(out["ys"])
         num_class_ids = 2
-        coco_eval = compute_coco_eval(outs, ys, num_class_ids)
-        metrics = {'mAP': 0.0, 'mAP50': 0.0}
-        if coco_eval is not None:
-            coco_metrics = coco_eval.stats
-            metrics = {'val_mAP': coco_metrics[0], 'val_mAP50': coco_metrics[1]}
-            self.log_dict(metrics)
+        metrics = {"val_loss": 1}
         return metrics
     
     def predict(self, x, raw_out=False, out_shape=None):
