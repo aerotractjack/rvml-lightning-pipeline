@@ -46,10 +46,10 @@ class ObjectDetection(pl.LightningModule):
     def output_to_numpy(self, out):
         def boxlist_to_numpy(boxlist):
             npy = {}
-            npy["boxes"] = torch.FloatTensor(boxlist.convert_boxes('xyxy').cpu())
+            npy["boxes"] = boxlist.convert_boxes('xyxy').cpu().float()
             # npy["class_ids"] = boxlist.get_field('class_ids').cpu()
-            npy["labels"] = torch.IntTensor(boxlist.get_field('class_ids').cpu())
-            scores = torch.FloatTensor(boxlist.get_field('scores'))
+            npy["labels"] = boxlist.get_field('class_ids').cpu().int()
+            scores = boxlist.get_field('scores').float()
             if scores is not None:
                 npy["scores"] = scores
             return npy
