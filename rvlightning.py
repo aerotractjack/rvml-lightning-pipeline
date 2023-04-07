@@ -63,8 +63,8 @@ class ObjectDetection(pl.LightningModule):
     
     def output_to_array(self, out, class_id_key="class_ids"):
         fnmap = {
-            "class_ids": self.boxlist_to_tensor,
-            "labels": self.boxlist_to_numpy
+            "class_ids": self.boxlist_to_numpy,
+            "labels": self.boxlist_to_tensor
         }
         fn = fnmap[class_id_key]
         if isinstance(out, BoxList):
@@ -236,7 +236,7 @@ class RVLightning:
                 break
             with torch.inference_mode():
                 out_batch = model.predict(x)
-                out_batch = model.output_to_array(out_batch, class_id_key="class_ids", type_hint="numpy")
+                out_batch = model.output_to_array(out_batch, class_id_key="class_ids")
             for out in out_batch:
                 yield out
                 
