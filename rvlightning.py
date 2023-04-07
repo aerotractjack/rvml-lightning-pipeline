@@ -35,6 +35,19 @@ class ObjectDetection(pl.LightningModule):
     def forward(self, img):
         return self.backbone(img)
     
+    def output_to_numpy(self, out):
+        def boxlist_to_numpy(boxlist):
+            return {
+                'boxes': boxlist.convert_boxes('yxyx').cpu().numpy(),
+                'class_ids': boxlist.get_field('class_ids').cpu().numpy(),
+                'scores': boxlist.get_field('scores').cpu().numpy()
+            }
+
+        if isinstance(out, BoxList):
+            return boxlist_to_numpy(out)
+        else:
+            return [boxlist_to_numpy(boxlist) for boxlist in out]
+    
     def training_step(self, batch, batch_ind):
         x, y = batch
         loss_dict = self.backbone(x, y)
@@ -45,11 +58,8 @@ class ObjectDetection(pl.LightningModule):
     def validation_step(self, batch, batch_ind):
         x, y = batch
         outs = self.backbone(x)
-        print(y)
         ys = self.to_device(y, 'cpu')
         outs = self.to_device(outs, 'cpu')
-        metrics = self.validate_end(outs)
-        self.log_dict(metrics)
         return {'ys': ys, 'outs': outs}
 
     def on_validation_batch_end(self, out, batch, batch_idx):
@@ -58,6 +68,8 @@ class ObjectDetection(pl.LightningModule):
         for o in out:
             outs.extend(o['outs'])
             ys.extend(o['ys'])
+        outs = self.output_to_numpy(outs)
+        ys = self.output_to_numpy(ys)
         num_class_ids = len(self.cfg.data.class_names)
         coco_eval = compute_coco_eval(outs, ys, num_class_ids)
         metrics = {'mAP': 0.0, 'mAP50': 0.0}
@@ -215,19 +227,6 @@ class RVLightning:
         train_dl, val_dl = self.build_train_val_loader()
         trainer.fit(model, train_dl, val_dl)
         trainer.save_checkpoint(output_dir + "/trainer/final-model.ckpt")
-        
-    def output_to_numpy(self, out):
-        def boxlist_to_numpy(boxlist):
-            return {
-                'boxes': boxlist.convert_boxes('yxyx').cpu().numpy(),
-                'class_ids': boxlist.get_field('class_ids').cpu().numpy(),
-                'scores': boxlist.get_field('scores').cpu().numpy()
-            }
-
-        if isinstance(out, BoxList):
-            return boxlist_to_numpy(out)
-        else:
-            return [boxlist_to_numpy(boxlist) for boxlist in out]
 
     def prediction_iterator(self, pred_dl, model, n=None):
         for i, (x, _) in tqdm(enumerate(pred_dl)):
@@ -235,7 +234,7 @@ class RVLightning:
                 break
             with torch.inference_mode():
                 out_batch = model.predict(x)
-                out_batch = self.output_to_numpy(out_batch)
+                out_batch = model.output_to_numpy(out_batch)
             for out in out_batch:
                 yield out
                 
