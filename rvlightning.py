@@ -74,7 +74,7 @@ class ObjectDetection(pl.LightningModule):
         outs = self.output_to_numpy(out["outs"])
         ys = self.output_to_numpy(out["ys"])
         self.val_map_metric(outs, ys)
-        self.log("val_map_batch", self.val_map_metric)
+        self.log_dict(self.val_map_metric)
     
     def predict(self, x, raw_out=False, out_shape=None):
         self.backbone.eval()
