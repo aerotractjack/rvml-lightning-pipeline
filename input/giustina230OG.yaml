@@ -43,7 +43,7 @@ pred_data_kw:
 
 model_kw:
   name: fasterrcnn_resnet50_fpn_v2
-  lr: 1e-3
+  lr: 1e-4
   
 train_kw:
   run_training: True
