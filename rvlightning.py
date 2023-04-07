@@ -15,6 +15,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from tqdm import tqdm
 from smart_open import smart_open
 import io
@@ -27,10 +28,12 @@ def exit():
 
 class ObjectDetection(pl.LightningModule):
 
-    def __init__(self, backbone, lr=1e-4):
+    def __init__(self, backbone, cc, lr=1e-4):
         super().__init__()
         self.backbone = TorchVisionODAdapter(backbone)
+        self.cc = cc
         self.lr = lr
+        self.val_map_metric = MeanAveragePrecision(box_format="yxyx", iou_thresholds=[0.5])
 
     def to_device(self, x, device):
         if isinstance(x, list):
@@ -65,16 +68,13 @@ class ObjectDetection(pl.LightningModule):
     def validation_step(self, batch, batch_ind):
         x, ys = batch
         outs = self.backbone(x)
-        print(outs)
-        print(ys)
         return {'ys': ys, 'outs': outs}
 
     def on_validation_batch_end(self, out, batch, batch_idx):
         outs = self.output_to_numpy(out["outs"])
         ys = self.output_to_numpy(out["ys"])
-        num_class_ids = 2
-        metrics = {"val_loss": 1}
-        return metrics
+        self.val_map_metric(outs, ys)
+        self.log("val_map_batch", self.val_map_metric)
     
     def predict(self, x, raw_out=False, out_shape=None):
         self.backbone.eval()
