@@ -11,7 +11,6 @@ from rastervision.pipeline.file_system import make_dir
 from torch.utils.data import DataLoader
 from torchvision.models import detection
 import torch
-import torch.nn.functional as F
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -30,7 +29,7 @@ class ObjectDetection(pl.LightningModule):
 
     def __init__(self, backbone, lr=1e-4):
         super().__init__()
-        self.backbone = TorchVisionODAdapter(backbone)
+        self.backbone = backbone # TorchVisionODAdapter(backbone)
         self.lr = lr
         self.val_map_metric = MeanAveragePrecision(box_format="xyxy", iou_thresholds=[0.5])
 
