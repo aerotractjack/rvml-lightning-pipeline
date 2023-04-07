@@ -43,20 +43,34 @@ class ObjectDetection(pl.LightningModule):
     def forward(self, img):
         return self.backbone(img)
     
-    def output_to_numpy(self, out, class_id_key="class_ids"):
-        def boxlist_to_numpy(boxlist):
-            npy = {}
-            npy["boxes"] = boxlist.convert_boxes('xyxy').cpu().float()
-            # npy["class_ids"] = boxlist.get_field('class_ids').cpu()
-            npy[class_id_key] = boxlist.get_field('class_ids').cpu().int()
-            scores = boxlist.get_field('scores')
-            if scores is not None:
-                npy["scores"] = scores.float()
-            return npy
+    def boxlist_to_tensor(self, boxlist, class_id_key):
+        tns = {}
+        tns["boxes"] = boxlist.convert_boxes('xyxy').cpu().float()
+        tns[class_id_key] = boxlist.get_field('class_ids').cpu().int()
+        scores = boxlist.get_field('scores')
+        if scores is not None:
+            tns["scores"] = scores.float()
+        return tns
+    
+    def boxlist_to_numpy(boxlist, class_id_key):
+        npy = {}
+        npy["boxes"] = boxlist.convert_boxes('xyxy').cpu().numpy()
+        npy[class_id_key] = boxlist.get_field('class_ids').cpu().numpy()
+        scores = boxlist.get_field('scores')
+        if scores is not None:
+            npy["scores"] = scores.numpy()
+        return npy
+    
+    def output_to_array(self, out, class_id_key="class_ids"):
+        fnmap = {
+            "class_ids": self.boxlist_to_tensor,
+            "labels": self.boxlist_to_numpy
+        }
+        fn = fnmap[class_id_key]
         if isinstance(out, BoxList):
-            return boxlist_to_numpy(out)
+            return fn(out, class_id_key)
         else:
-            return [boxlist_to_numpy(boxlist) for boxlist in out]
+            return [fn(boxlist, class_id_key) for boxlist in out]
     
     def training_step(self, batch, batch_ind):
         x, y = batch
@@ -68,8 +82,8 @@ class ObjectDetection(pl.LightningModule):
     def validation_step(self, batch, batch_ind):
         x, ys = batch
         outs = self.backbone(x)
-        ys = self.output_to_numpy(ys, class_id_key="labels")
-        outs = self.output_to_numpy(outs, class_id_key="labels")
+        ys = self.output_to_array(ys, class_id_key="labels")
+        outs = self.output_to_array(outs, class_id_key="labels")
         self.val_map_metric(outs, ys)
         self.log_dict(self.val_map_metric.compute())
         return {'ys': ys, 'outs': outs}
@@ -222,7 +236,7 @@ class RVLightning:
                 break
             with torch.inference_mode():
                 out_batch = model.predict(x)
-                out_batch = model.output_to_numpy(out_batch, class_id_key="class_ids")
+                out_batch = model.output_to_array(out_batch, class_id_key="class_ids", type_hint="numpy")
             for out in out_batch:
                 yield out
                 
