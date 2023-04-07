@@ -108,7 +108,7 @@ class RVLightning:
         self.cc = ClassConfig(
             names=class_config["names"], 
             colors=class_config["colors"],
-            null_class="null")
+        )
         self.output_uri = output.get("uri")
         self.bucket = output.get("bucket")
         self.kw = kw

@@ -24,13 +24,10 @@ output:
   uri: "/home/aerotract/NAS/main/JackSandbox/objdet/sliding-training-230OG"
 
 class_config:
-  names: ["null", "DF"]
-  colors: ["black", "orange"]
+  names: ["DF"]
+  colors: ["orange"]
 
 train_data_kw:
-  # size_lims: [300,500]
-  # out_size: 325
-  # max_windows: 500
   size: 325
   stride: 325
   batch_size: 2
