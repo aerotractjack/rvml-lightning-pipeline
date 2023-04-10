@@ -1,0 +1,56 @@
+train_uri: 
+  - [
+    #"/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif",
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/Tiled/230OG_Orthomosaic/230OG_Orthomosaic-8-10_export_ThuFeb09235404582203.tif",
+  ]
+  - "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson"
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson",
+  ]
+
+val_uri: 
+  - [
+    #"/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/230OG_Orthomosaic_export_WedMar08181810258552.tif",
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/Tiled/230OG_Orthomosaic/230OG_Orthomosaic-8-10_export_ThuFeb09235404582203.tif",
+  ]
+  - "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/Tree_polygons_00_230OG.geojson"
+  - [
+    "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Training/border_polygon_00_230OG.geojson"
+  ]
+
+pred_uri: 
+  - "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/Tiled/230OG_Orthomosaic/230OG_Orthomosaic-8-10_export_ThuFeb09235404582203.tif"
+
+output:
+  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/230OG-tests-monday-small"
+
+class_config:
+  names: ["DF"]
+  colors: ["orange"]
+
+train_data_kw:
+  size: 450
+  stride: 450
+  batch_size: 2
+
+val_data_kw:
+  size: 450
+  stride: 450
+
+pred_data_kw:
+  size: 450
+  stride: 450
+  batch_size: 2
+
+model_kw:
+  name: fasterrcnn_resnet50_fpn_v2
+  lr: 1e-4
+
+train: True
+train_kw:
+  run_training: True
+  epochs: 1
+
+predict: True
+predict_kw: 
+  max_batches: 1000

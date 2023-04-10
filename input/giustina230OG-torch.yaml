@@ -19,9 +19,8 @@ val_uri:
 pred_uri: 
   - "/home/aerotract/NAS/main/Clients/Giustina/Winter2023/100_230OG/Data/ortho/Tiled/230OG_Orthomosaic"
 
-
 output:
-  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/230OG-tests-friday"
+  uri: "/home/aerotract/NAS/main/JackSandbox/objdet/230OG-tests-monday-torch"
 
 class_config:
   names: ["DF"]
@@ -42,12 +41,16 @@ pred_data_kw:
   batch_size: 2
 
 model_kw:
-  name: fasterrcnn_resnet50_fpn_v2
-  lr: 1e-4
-  
-train_kw:
-  run_training: True
-  epochs: 5
+  name: resnet50
+  feature_extract: False
 
+train: True
+train_kw:
+  optimizer: SGD
+  criterion: smooth_l1_loss
+  lr: 1e-4
+  epochs: 1
+
+predict: True
 predict_kw: 
-  max_batches: None
+  max_batches: 1000
