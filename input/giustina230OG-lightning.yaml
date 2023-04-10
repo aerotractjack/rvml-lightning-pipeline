@@ -49,7 +49,7 @@ model_kw:
 train: True
 train_kw:
   run_training: True
-  epochs: 1
+  epochs: 10
 
 predict: True
 predict_kw: 
