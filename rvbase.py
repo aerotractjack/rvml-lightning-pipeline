@@ -1,6 +1,7 @@
 from rastervision.core.data import ClassConfig
 from rastervision.pytorch_learner import (
     ObjectDetectionSlidingWindowGeoDataset,
+    ObjectDetectionRandomWindowGeoDataset,
 )
 from rastervision.pytorch_learner.object_detection_utils import collate_fn
 from torch.utils.data import DataLoader
@@ -23,15 +24,27 @@ class RVBase:
         
     def build_train_ds(self, **dskw):
         kw = self.kw.get("train_data_kw", {})
-        train_ds = ObjectDetectionSlidingWindowGeoDataset.from_uris(
+        # train_ds = ObjectDetectionSlidingWindowGeoDataset.from_uris(
+        #     class_config=self.cc,
+        #     image_uri=self.train_uris[0],
+        #     aoi_uri=self.train_uris[2],
+        #     label_vector_uri=self.train_uris[1],
+        #     label_vector_default_class_id=self.cc.get_class_id('DF'),
+        #     size=kw.get("size", 325),
+        #     stride=kw.get("stride", 325),
+        #     **dskw)
+        train_ds = ObjectDetectionRandomWindowGeoDataset.from_uris(
             class_config=self.cc,
             image_uri=self.train_uris[0],
             aoi_uri=self.train_uris[2],
             label_vector_uri=self.train_uris[1],
             label_vector_default_class_id=self.cc.get_class_id('DF'),
-            size=kw.get("size", 325),
-            stride=kw.get("stride", 325),
-            **dskw)
+            size_lims=(kw.get("size", 325)-1, kw.get("size", 325)),
+            out_size=kw.get("size", 325),
+            neg_ratio=kw.get("neg_ratio", 0.1),
+            neg_ioa_thresh=kw.get("neg_ioa_thresh", 0.1),
+            max_windows=kw.get("max_windows", None),
+        )
         return train_ds
     
     def build_val_ds(self, **dskw):

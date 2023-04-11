@@ -35,7 +35,8 @@ class RVLightning(RVBase):
         backbone = self.model_type()(
             weights=FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT,
             weights_backbone=ResNet50_Weights.DEFAULT,
-            box_detections_per_img=5,)
+            image_mean=[0.485, 0.456, 0.406],
+            image_std=[0.229, 0.224, 0.225])
         num_classes = len(self.cc) + 1
         num_boxes = num_classes * 4
         backbone.roi_heads.box_predictor.cls_score = torch.nn.Linear(1024, num_classes)
