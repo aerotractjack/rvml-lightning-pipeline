@@ -60,7 +60,7 @@ def run_if_main(name, objcls):
         return
     from configreader import yaml2dict
     import sys
-    file = "input/giustina230OG-torch.yaml"
+    file = "input/giustina230OG-lightning.yaml"
     if len(sys.argv) > 1:
         file = sys.argv[1]
     conf = yaml2dict(file)
